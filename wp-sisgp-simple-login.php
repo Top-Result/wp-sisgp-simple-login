@@ -3,7 +3,7 @@
  * Plugin Name:       SISGP Simple Login
  * Plugin URI:        https://github.com/Top-Result/wp-sisgp-simple-login
  * Description:       Script que concede login entre WordPress e SisGP.
- * Version:           0.2
+ * Version:           0.2r0003061714
  * Requires at least: 5.2
  * Requires PHP:      7.2
  * Author:            Jeimison Moreno
@@ -47,7 +47,7 @@ add_action( 'admin_post_sisgp_sl_action_registerpages', 'sisgp_sl_action_registe
 function sisgp_sl_action_registerpages() {
     if ( ! current_user_can( 'activate_plugins' ) ) return;
         { toLog("-> Ativando."); }
-        $page_slug = 'registro'; // Slug of the Post
+        $page_slug = 'conclusao-cadastro'; // Slug of the Post
         $pg = get_page_by_path( $page_slug, OBJECT, 'page');
         
         $new_page = array(
