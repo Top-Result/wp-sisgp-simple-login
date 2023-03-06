@@ -3,7 +3,7 @@
  * Plugin Name:       SISGP Simple Login
  * Plugin URI:        https://github.com/Top-Result/wp-sisgp-simple-login
  * Description:       Script que concede login entre WordPress e SisGP.
- * Version:           0.2r0003061800
+ * Version:           0.2r0003061834
  * Requires at least: 5.2
  * Requires PHP:      7.2
  * Author:            Jeimison Moreno
@@ -515,22 +515,38 @@ function api_fluxus_login($baseurl, $ambiente, $usuario, $senha){
 
 
 function sisgp_sl_api_login_auth( $user, $username, $password ){
-    if($user instanceof WP_User)
-        if(!$user->has_cap('externo'))
-            return $user;
+    $podeBarrar = true;
+    if($username != ""){
+        $possib_user = get_user_by('email', $username);
+        if($possib_user instanceof WP_User)
+            if($possib_user->has_cap('externo')){
+                { toLog("api_extern_email=> $username"); }
+                $username = $possib_user->user_login;
+                $podeBarrar = false;
+            }
+    }
+
+    if($podeBarrar)
+        if($user instanceof WP_User)
+            if(!$user->has_cap('externo'))
+                return $user;
+    
     if($username == '' || $password == '') return $user;
     
     // Verifica local
-    $user_id_local = wp_authenticate_username_password(null, $username, $password);
+    // $user_id_local = wp_authenticate_username_password(null, $username, $password);
 
-    { toLog("wp_auth=> ".print_r($user_id_local,true)); }
+    if(is_wp_error($user)){
+        { toLog("wp_auth_err=> ".$user->get_error_message()); }
+    } else
+        { toLog("wp_auth_err__=> ".print_r($user,true)); }
     
 
     // Verifica remoto
     $baseurl=get_option('sisgpsl_api_login_text_urlbase');
     $ambiente=get_option('sisgpsl_api_login_text_ambiente');
     $res = api_fluxus_login($baseurl,$ambiente,$username,md5($password));
-    {toLog("CALL= ".json_encode($res));}
+    {toLog("CURLresp= ".json_encode($res));}
 
     $FALHOU = true;
     if($res)
@@ -572,7 +588,6 @@ function sisgp_sl_api_login_auth( $user, $username, $password ){
                 return $user;
             }
             else if ($res["userName"] == null) { // Se ocorreu erro:
-                // { toLog("curlErrorCode:".$resultCode.":".$resultResponse); }
                 return new WP_Error( 'incorrect_password', __(sprintf("<b>Erro:</b> %s",$res["error"])) );
             } else { // response indefinido:
                 // { toLog("curlUndefinedServerResponse:".$resultCode.":".$resultResponse); }
