@@ -3,7 +3,7 @@
  * Plugin Name:       SISGP Simple Login
  * Plugin URI:        https://github.com/Top-Result/wp-sisgp-simple-login
  * Description:       Script que concede login entre WordPress e SisGP.
- * Version:           0.2r0003061742
+ * Version:           0.2r0003061800
  * Requires at least: 5.2
  * Requires PHP:      7.2
  * Author:            Jeimison Moreno
@@ -515,22 +515,15 @@ function api_fluxus_login($baseurl, $ambiente, $usuario, $senha){
 
 
 function sisgp_sl_api_login_auth( $user, $username, $password ){
-    if($username == '' || $password == '') return;
+    if($user instanceof WP_User)
+        if(!$user->has_cap('externo'))
+            return $user;
+    if($username == '' || $password == '') return $user;
     
     // Verifica local
-    $user_id_local = wp_authenticate($username, $password);
+    $user_id_local = wp_authenticate_username_password(null, $username, $password);
 
     { toLog("wp_auth=> ".print_r($user_id_local,true)); }
-    if ($user_id_local)
-        if($user_id_local instanceof WP_User){
-            { toLog("api_login_auth=> User[".$user_id_local->ID."] encontrado"); }
-            //$user = $user_id_local;//new WP_User($user_id_local);
-            // Se for local, autentica!
-            if(!$user_id_local->has_cap('externo')){
-                { toLog("api_login_auth=> User[".$user_id_local->ID."] não é da API"); }
-                return $user_id_local;
-            }
-        }
     
 
     // Verifica remoto
