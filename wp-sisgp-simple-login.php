@@ -526,20 +526,20 @@ function sisgp_sl_api_login_auth( $user, $username, $password ){
         $log_user_login = get_user_by('login', $username);
 
         // Verificar se entrou com credenciais válidas
-        $userLog = $log_user_mail instanceof WP_User ? $log_user_mail : $log_user_login;
+        $userLog = $log_user_mail ? $log_user_mail : $log_user_login;
         if($userLog instanceof WP_User){ // Caso não seja um erro
             if(!$userLog->has_cap('externo')){ // É um login "nativo"
-                $user = wp_authenticate_username_password($userLog->user_login, $password);
+                $user = wp_authenticate_username_password(null, $userLog->user_login, $password);
                 // Se conseguiu autenticar, assume login
                 if($user instanceof WP_User){
                     { toLog("sisgpsl_api_login_PASS=> OK."); }
                     return $user;
                 }
             } else {
-                
+                { toLog("sisgpsl_api_login_PASS_fail=> É login externo."); }
             }
         } else {
-            { toLog("sisgpsl_api_login_PASS_fail=> Login incorreto."); }
+            { toLog("sisgpsl_api_login_PASS_fail=> Usuário/email incorreto."); }
         }
 
 
