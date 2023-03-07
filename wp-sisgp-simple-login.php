@@ -3,7 +3,7 @@
  * Plugin Name:       SISGP Simple Login
  * Plugin URI:        https://github.com/Top-Result/wp-sisgp-simple-login
  * Description:       Script que concede login entre WordPress e SisGP.
- * Version:           0.2r0003071803
+ * Version:           0.2r0003071914
  * Requires at least: 5.2
  * Requires PHP:      7.2
  * Author:            Jeimison Moreno
@@ -45,7 +45,9 @@ function toLog($msg){
 
 add_action( 'admin_post_sisgp_sl_action_registerpages', 'sisgp_sl_action_registerpages' );
 function sisgp_sl_action_registerpages() {
+
     if ( ! current_user_can( 'activate_plugins' ) ) return;
+    
         { toLog("-> Ativando."); }
         $page_slug = 'conclusao-cadastro'; // Slug of the Post
         $pg = get_page_by_path( $page_slug, OBJECT, 'page');
@@ -510,15 +512,24 @@ function api_fluxus_login($baseurl, $ambiente, $usuario, $senha){
 
 // add_filter( 'um_submit_form_data', 'sisgp_sl_api_submit_data', 10, 2 );
 
+function sisgp_sl_api_isUserExterno($user){
+    if($user instanceof WP_User){
+        // https://developer.wordpress.org/reference/classes/wp_user/has_cap/
+        // L. 781
+        return $user->has_cap('externo') && !( is_multisite() && is_super_admin( $user->id ));
+    }
+    return false;
+}
+
 
 // =====================================================
 
 
 function sisgp_sl_api_login_auth( $user, $username, $password ){
     // Se logou sem a API:
-    // if($user instanceof WP_User)
-    //     if(!$user->has_cap('externo')) // E não for externo...
-    //         return $user; // Autoriza login
+    if($user instanceof WP_User)
+        if(!sisgp_sl_api_isUserExterno($user)) // E não for externo...
+            return $user; // Autoriza login
 
     if($username != ""){
 
@@ -528,7 +539,7 @@ function sisgp_sl_api_login_auth( $user, $username, $password ){
         // Verificar se entrou com credenciais válidas
         $userLog = $log_user_mail ? $log_user_mail : $log_user_login;
         if($userLog instanceof WP_User){ // Caso não seja um erro
-            if(!$userLog->has_cap('externo')){ // É um login "nativo"
+            if(!sisgp_sl_api_isUserExterno($userLog)){ // É um login "nativo"
                 $user = wp_authenticate_username_password(null, $userLog->user_login, $password);
                 // Se conseguiu autenticar, assume login
                 if($user instanceof WP_User){
@@ -545,7 +556,7 @@ function sisgp_sl_api_login_auth( $user, $username, $password ){
 
 
         if($log_user_mail instanceof WP_User){
-            if($log_user_mail->has_cap('externo')){
+            if(sisgp_sl_api_isUserExterno($log_user_mail)){
                 { toLog("sisgpsl_api_login_email2user=> $username"); }
                 $username = $log_user_mail->user_login;
             }
